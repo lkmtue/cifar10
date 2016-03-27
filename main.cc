@@ -33,8 +33,8 @@ vector<Sample> data;
 
 void getLayers(vector<Layer*> *layers) {
 
-  Real alpha = 0.01;
-  Real momentum = 0.0;
+  Real alpha = 0.001;
+  Real momentum = 0.9;
 
   layers->push_back(new InputLayer("input", batch, 32, 32, 3));
 

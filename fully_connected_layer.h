@@ -24,13 +24,22 @@ namespace con {
           weightFiller(weightFiller), biasFiller(biasFiller), activation(activation) {
 
         weight.resize(depth * inputSize);
+        weightHistory.resize(depth * inputSize);
         bias.resize(depth);
+        biasHistory.resize(depth);
         delta.resize(depth * inputSize);
+        biasMultiplier = Vec(num, 1.0);
+
         biasDelta.resize(depth);
         reshape(num, width, height, depth, &constantOutput);
 
         weightFiller->fill(&weight);
         biasFiller->fill(&bias);
+
+        flatInput.resize(num * inputSize);
+        flatOutput.resize(num * depth);
+        flatNextErrors.resize(num * depth);
+        flatErrors.resize(num * inputSize);
       }
 
       const int inWidth;
@@ -46,78 +55,91 @@ namespace con {
       Activation *activation;
 
       Vec weight;
+      Vec weightHistory;
+      Vec delta;
       Vec bias;
+      Vec biasHistory;
+      Vec biasDelta;
+      Vec biasMultiplier;
+
       vector<Vec> constantOutput;
 
-      void forward() {
-        for (int n = 0; n < num; n++) {
-          for (int outputIndex = 0; outputIndex < depth; outputIndex++) {
-            Real result = 0;
-            for (int inputIndex = 0; inputIndex < inputSize; inputIndex++) {
-              const int weightIndex = outputIndex * inputSize + inputIndex;
+      Vec flatInput;
+      Vec flatOutput;
+      Vec flatNextErrors;
+      Vec flatErrors;
 
-              result += weight[weightIndex] * prev->output[n][inputIndex];
-            }
-
-            constantOutput[n][outputIndex] = result + bias[outputIndex];
-            output[n][outputIndex] = activation->f(constantOutput[n][outputIndex]);
+      void flatten(const vector<Vec> a, Vec *b) {
+        int i = 0;
+        for (int j = 0; j < a.size(); j++) {
+          for (int k = 0; k < a[j].size(); k++) {
+            b->at(i++) = a[j][k];
           }
         }
+      }
+
+      void reconstruct(const Vec &a, vector<Vec> *b) {
+        int i = 0;
+        for (int j = 0; j < b->size(); j++) {
+          for (int k = 0; k < b->at(j).size(); k++) {
+            b->at(j)[k] = a[i++];
+          }
+        }
+      }
+
+      void forward() {
+        flatten(prev->output, &flatInput);
+
+        gemm(
+            CblasNoTrans, CblasTrans,
+            num, depth, inputSize,
+            1., flatInput, weight,
+            0., &flatOutput);
+
+        gemm(
+            CblasNoTrans, CblasNoTrans,
+            num, depth, 1,
+            1., biasMultiplier, bias,
+            1., &flatOutput);
+
+        reconstruct(flatOutput, &output);
       }
 
       void backProp(const vector<Vec> &nextErrors) {
         clear(&errors);
 
-        for (int n = 0; n < num; n++) {
-          for (int inputIndex = 0; inputIndex < inputSize; inputIndex++) {
-            for (int outputIndex = 0; outputIndex < depth; outputIndex++) {
+        flatten(nextErrors, &flatNextErrors);
 
-              const int weightIndex = outputIndex * inputSize + inputIndex;
+        gemm(
+            CblasTrans, CblasNoTrans,
+            depth, inputSize, num,
+            1., flatNextErrors, flatInput,
+            1., &delta);
 
-              errors[n][inputIndex] +=
-                nextErrors[n][outputIndex] *
-                  // activation->df(output[n][outputIndex]) *
-                  activation->df(constantOutput[n][outputIndex]) *
-                  weight[weightIndex];
-            }
-          }
-        }
+        gemv(
+            CblasTrans,
+            num, depth,
+            1., flatNextErrors, biasMultiplier,
+            1., &biasDelta);
 
-        for (int outputIndex = 0; outputIndex < depth; outputIndex++) {
-          for (int inputIndex = 0; inputIndex < inputSize; inputIndex++) {
-            const int weightIndex = outputIndex * inputSize + inputIndex;
-
-            Real d = momentum * delta[weightIndex];
-
-            for (int n = 0; n < num; n++) {
-              const Real dedw =
-                nextErrors[n][outputIndex] *
-                  // activation->df(output[n][outputIndex]) *
-                  activation->df(constantOutput[n][outputIndex]) *
-                  prev->output[n][inputIndex];
-
-              d += alpha * dedw;
-            }
+        gemm(
+            CblasNoTrans, CblasNoTrans,
+            num, inputSize, depth,
+            1., flatNextErrors, weight,
+            0., &flatErrors);
 
 #ifndef TESTING
-            weight[weightIndex] -= d;
+        applyUpdate();
 #endif
-            delta[weightIndex] = d;
-          }
 
-          biasDelta[outputIndex] = 0;
-          for (int n = 0; n < num; n++) {
-            // biasDelta[outputIndex] += alpha * nextErrors[n][outputIndex] * activation->df(output[n][outputIndex]);
-            biasDelta[outputIndex] += alpha * nextErrors[n][outputIndex] * activation->df(constantOutput[n][outputIndex]);
-#ifndef TESTING
-            // bias[outputIndex] -= alpha * nextErrors[n][outputIndex] * activation->df(output[n][outputIndex]);
-            bias[outputIndex] -= alpha * nextErrors[n][outputIndex] * activation->df(constantOutput[n][outputIndex]);
-#endif
-          }
-        }
+        reconstruct(flatErrors, &errors);
       }
 
-      Vec delta;
-      Vec biasDelta;
+      void applyUpdate() {
+        // subtractDelta(alpha, delta, &weight);
+        // subtractDelta(alpha, biasDelta, &bias);
+        momentumUpdate(alpha, momentum, delta, &weight, &weightHistory);
+        momentumUpdate(alpha, momentum, biasDelta, &bias, &biasHistory);
+      }
   };
 }

@@ -29,11 +29,13 @@ namespace con {
           weightFiller(weightFiller), biasFiller(biasFiller) {
 
         weight.resize(kernelArea * inDepth * depth);
+        weightHistory.resize(kernelArea * inDepth * depth);
         weightFiller->fill(&weight);
 
         delta.resize(kernelArea * inDepth * depth);
 
         bias.resize(depth * height * width);
+        biasHistory.resize(depth * height * width);
 
         biasMultiplier = Vec(height * width, 1.0);
 
@@ -62,9 +64,11 @@ namespace con {
 
       Vec weight;
       Vec delta;
+      Vec weightHistory;
       Vec bias;
       // (1, width * height) ones matrix.
       Vec biasDelta;
+      Vec biasHistory;
       Vec biasMultiplier;
 
       Vec col;
@@ -99,8 +103,10 @@ namespace con {
       }
 
       void applyUpdate() {
-        subtractDelta(alpha, delta, &weight);
-        subtractDelta(alpha, biasDelta, &bias);
+        // subtractDelta(alpha, delta, &weight);
+        // subtractDelta(alpha, biasDelta, &bias);
+        momentumUpdate(alpha, momentum, delta, &weight, &weightHistory);
+        momentumUpdate(alpha, momentum, biasDelta, &bias, &biasHistory);
       }
 
       void backProp(const vector<Vec> &nextErrors) {
@@ -128,6 +134,10 @@ namespace con {
       }
 
       void backPropInput(const Vec &nextErrors, const Vec &weight, Vec *errors) {
+        if (name == "conv1") {
+          return;
+        }
+
         gemm(
             CblasTrans, CblasNoTrans,
             kernelArea * inDepth, width * height, depth,
