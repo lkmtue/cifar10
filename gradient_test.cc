@@ -452,8 +452,8 @@ namespace con {
 
 int main() {
   // con::testSoftmax();
-  // con::testFC();
-  con::testConv();
+  con::testFC();
+  // con::testConv();
   // con::testMaxPooling();
   // con::testAveragePooling();
   // con::testRelu();

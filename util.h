@@ -105,10 +105,10 @@ namespace con {
   void gemv(
       const CBLAS_TRANSPOSE &TransA,
       const int &M, const int &N,
-      const Real &alpha, const Vec &vecA, const Vec &vecX,
+      const Real &alpha, const Vec &matA, const Vec &vecX,
       const double beta, Vec *vecY) {
 
-    const Real *A = &vecA[0];
+    const Real *A = &matA[0];
     const Real *x = &vecX[0];
     Real *y = &vecY->at(0);
 
@@ -143,6 +143,18 @@ namespace con {
   void subtractDelta(const Real &lr, const Vec &d, Vec *w) {
     for (int i = 0; i < d.size(); i++) {
       w->at(i) -= lr * d[i];
+    }
+  }
+
+  void momentumUpdate(
+      const Real &lr, const Real &momentum,
+      const Vec &delta,
+      Vec *weight, Vec *history) {
+
+    // Adagrad.
+    for (int i = 0; i < delta.size(); i++) {
+      history->at(i) += sqr(delta[i]);
+      weight->at(i) += -lr * delta[i] / (sqrt(history->at(i)) + 1e-7);
     }
   }
 }
