@@ -11,7 +11,7 @@ namespace con {
       FullyConnectedLayer(
         const string &name,
         const int &depth,
-        const Real &alpha, const Real &momentum,
+        const Real &alpha, const Real &momentum, const Real &decay,
         Layer *prev,
         Filler *weightFiller,
         Filler *biasFiller,
@@ -20,7 +20,7 @@ namespace con {
           Layer(name, prev->num, 1, 1, depth, prev),
           inWidth(prev->width), inHeight(prev->height), inDepth(prev->depth),
           inputSize(prev->width * prev->height * prev->depth),
-          alpha(alpha), momentum(momentum),
+          alpha(alpha), momentum(momentum), decay(decay),
           weightFiller(weightFiller), biasFiller(biasFiller), activation(activation) {
 
         weight.resize(depth * inputSize);
@@ -49,6 +49,7 @@ namespace con {
 
       const Real alpha;
       const Real momentum;
+      const Real decay;
 
       Filler *weightFiller;
       Filler *biasFiller;
@@ -136,10 +137,8 @@ namespace con {
       }
 
       void applyUpdate() {
-        // subtractDelta(alpha, delta, &weight);
-        // subtractDelta(alpha, biasDelta, &bias);
-        momentumUpdate(alpha, momentum, delta, &weight, &weightHistory);
-        momentumUpdate(alpha, momentum, biasDelta, &bias, &biasHistory);
+        updateParam(alpha, momentum, decay, &delta, &weight, &weightHistory);
+        updateParam(alpha, momentum, decay, &biasDelta, &bias, &biasHistory);
       }
   };
 }

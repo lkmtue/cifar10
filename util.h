@@ -140,21 +140,19 @@ namespace con {
     std::fill(v->begin(), v->end(), 1.0);
   }
 
-  void subtractDelta(const Real &lr, const Vec &d, Vec *w) {
-    for (int i = 0; i < d.size(); i++) {
-      w->at(i) -= lr * d[i];
-    }
-  }
+  void updateParam(
+      const Real &lr, const Real &momentum, const Real &decay,
+      Vec *delta, Vec *weight, Vec *history) {
 
-  void momentumUpdate(
-      const Real &lr, const Real &momentum,
-      const Vec &delta,
-      Vec *weight, Vec *history) {
+    // Decay.
+    for (int i = 0; i < delta->size(); i++) {
+      delta->at(i) += decay * weight->at(i);
+    }
 
     // Adagrad.
-    for (int i = 0; i < delta.size(); i++) {
-      history->at(i) += sqr(delta[i]);
-      weight->at(i) += -lr * delta[i] / (sqrt(history->at(i)) + 1e-7);
+    for (int i = 0; i < delta->size(); i++) {
+      history->at(i) += sqr(delta->at(i));
+      weight->at(i) += -lr * delta->at(i) / (sqrt(history->at(i)) + 1e-7);
     }
   }
 }

@@ -11,7 +11,7 @@ namespace con {
       ConvolutionalLayer(
         const string &name,
         const int &depth, const int &kernel, const int &stride, const int &padding,
-        const Real &alpha, const Real &momentum,
+        const Real &alpha, const Real &momentum, const Real &decay,
         Layer *prev,
         Filler *weightFiller,
         Filler *biasFiller) :
@@ -24,7 +24,7 @@ namespace con {
             depth,
             prev),
           kernel(kernel), kernelArea(sqr(kernel)), stride(stride), padding(padding),
-          alpha(alpha), momentum(momentum),
+          alpha(alpha), momentum(momentum), decay(decay),
           inWidth(prev->width), inHeight(prev->height), inDepth(prev->depth),
           weightFiller(weightFiller), biasFiller(biasFiller) {
 
@@ -54,6 +54,7 @@ namespace con {
 
       const Real alpha;
       const Real momentum;
+      const Real decay;
 
       const int inWidth;
       const int inHeight;
@@ -79,10 +80,6 @@ namespace con {
         for (int n = 0; n < num; n++) {
           forwardOnce(prev->output[n], &output[n]);
         }
-
-#ifndef TESTING
-        applyUpdate();
-#endif
       }
 
       void forwardOnce(const Vec &input, Vec *output) {
@@ -103,10 +100,8 @@ namespace con {
       }
 
       void applyUpdate() {
-        // subtractDelta(alpha, delta, &weight);
-        // subtractDelta(alpha, biasDelta, &bias);
-        momentumUpdate(alpha, momentum, delta, &weight, &weightHistory);
-        momentumUpdate(alpha, momentum, biasDelta, &bias, &biasHistory);
+        updateParam(alpha, momentum, decay, &delta, &weight, &weightHistory);
+        updateParam(alpha, momentum, decay, &biasDelta, &bias, &biasHistory);
       }
 
       void backProp(const vector<Vec> &nextErrors) {
@@ -117,6 +112,10 @@ namespace con {
         for (int n = 0; n < num; n++) {
           backPropOnce(prev->output[n], nextErrors[n], &errors[n]);
         }
+
+        #ifndef TESTING
+                applyUpdate();
+        #endif
       }
 
       void backPropOnce(const Vec &input, const Vec &nextErrors, Vec *errors) {

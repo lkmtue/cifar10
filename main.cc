@@ -29,29 +29,30 @@ auto constantActivation = ConstantActivation();
 const int batch = 100;
 
 vector<Layer*> layers;
-vector<Sample> data;
+vector<Sample> trainData, testData;
 
 void getLayers(vector<Layer*> *layers) {
 
   Real alpha = 0.001;
   Real momentum = 0.9;
+  Real decay = 0.004;
 
   layers->push_back(new InputLayer("input", batch, 32, 32, 3));
 
-  layers->push_back(new ConvolutionalLayer("conv1", 32, 5, 1, 2, alpha, momentum, layers->back(), &gaussianFiller1, &constantFiller));
+  layers->push_back(new ConvolutionalLayer("conv1", 32, 5, 1, 2, alpha, momentum, decay, layers->back(), &gaussianFiller1, &constantFiller));
   layers->push_back(new MaxPoolingLayer("pool1", 3, 2, layers->back()));
   layers->push_back(new ReluLayer("relu1", layers->back()));
 
-  layers->push_back(new ConvolutionalLayer("conv2", 32, 5, 1, 2, alpha, momentum, layers->back(), &gaussianFiller2, &constantFiller));
+  layers->push_back(new ConvolutionalLayer("conv2", 32, 5, 1, 2, alpha, momentum, decay, layers->back(), &gaussianFiller2, &constantFiller));
   layers->push_back(new ReluLayer("relu2", layers->back()));
   layers->push_back(new AveragePoolingLayer("pool2", 3, 2, layers->back()));
 
-  layers->push_back(new ConvolutionalLayer("conv3", 64, 5, 1, 2, alpha, momentum, layers->back(), &gaussianFiller2, &constantFiller));
+  layers->push_back(new ConvolutionalLayer("conv3", 64, 5, 1, 2, alpha, momentum, decay, layers->back(), &gaussianFiller2, &constantFiller));
   layers->push_back(new ReluLayer("relu3", layers->back()));
   layers->push_back(new AveragePoolingLayer("pool3", 3, 2, layers->back()));
 
-  layers->push_back(new FullyConnectedLayer("fc1", 64, alpha, momentum, layers->back(), &gaussianFiller3, &constantFiller, &constantActivation));
-  layers->push_back(new FullyConnectedLayer("fc2", 10, alpha, momentum, layers->back(), &gaussianFiller3, &constantFiller, &constantActivation));
+  layers->push_back(new FullyConnectedLayer("fc1", 64, alpha, momentum, decay, layers->back(), &gaussianFiller3, &constantFiller, &constantActivation));
+  layers->push_back(new FullyConnectedLayer("fc2", 10, alpha, momentum, decay, layers->back(), &gaussianFiller3, &constantFiller, &constantActivation));
 
   layers->push_back(new SoftmaxLossLayer("softmax", layers->back()));
 
@@ -63,7 +64,8 @@ void getLayers(vector<Layer*> *layers) {
 int main() {
   // srand(time(NULL));
   getLayers(&layers);
-  readTrain(&data);
-  train(batch, layers, data);
+  readTrain(&trainData);
+  readTest(&testData);
+  train(batch, layers, trainData, testData);
   return 0;
 }
