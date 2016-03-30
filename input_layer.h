@@ -16,5 +16,7 @@ namespace con {
       void forward() {}
 
       void backProp(const vector<Vec> &nextErrors) {}
+
+      void applyUpdate(const Real &lr, const Real &momentum, const Real &decay) {}
   };
 }

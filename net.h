@@ -66,18 +66,25 @@ namespace con {
     cout << "Accuracy: " << 1.0 * correct / validateData.size() << endl;
   }
 
-  void trainSingleBatch(const vector<Layer*> &layers, const vector<Vec> &input, const vector<int> &output) {
+  void trainSingleBatch(
+      const vector<Layer*> &layers,
+      const vector<Vec> &input, const vector<int> &output,
+      const Real &lr, const Real &momentum, const Real &decay) {
+
     InputLayer *inputLayer = (InputLayer*)layers[0];
     SoftmaxLossLayer *outputLayer = (SoftmaxLossLayer*)layers.back();
 
     inputLayer->setOutput(input);
     outputLayer->setLabels(output);
 
+    // Forward.
     for (int l = 0; l < layers.size(); l++) {
       layers[l]->forward();
     }
+
     cout << "loss: " << outputLayer->l << endl;
 
+    // Back propagation.
     for (int l = (int)layers.size() - 1; l >= 0; l--) {
       if (l + 1 < layers.size()) {
         layers[l]->backProp(layers[l + 1]->errors);
@@ -85,17 +92,23 @@ namespace con {
         layers[l]->backProp(vector<Vec>());
       }
     }
+
+    // Apply changes.
+    for (int l = 0; l < layers.size(); l++) {
+      layers[l]->applyUpdate(lr, momentum, decay);
+    }
   }
 
   void train(
       const int &batchSize,
       const vector<Layer*> &layers,
-      const vector<Sample> &trainData, const vector<Sample> &validateData) {
+      const vector<Sample> &trainData, const vector<Sample> &validateData,
+      const Real &lr, const Real &momentum, const Real &decay) {
+
+    validate(batchSize, layers, validateData);
 
     for (int epoch = 0; epoch < 10; epoch++) {
       cout << "Start epoch #" << epoch << endl;
-
-      validate(batchSize, layers, validateData);
 
       for (int i = 0; i < trainData.size(); i += batchSize) {
         int j = std::min((int)trainData.size(), i + batchSize);
@@ -108,10 +121,12 @@ namespace con {
           output.push_back(trainData[k].label);
         }
 
-        trainSingleBatch(layers, input, output);
+        trainSingleBatch(layers, input, output, lr, momentum, decay);
       }
 
       cout << "End epoch #" << epoch << endl;
+
+      validate(batchSize, layers, validateData);
     }
   }
 

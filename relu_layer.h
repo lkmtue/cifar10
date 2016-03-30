@@ -8,12 +8,8 @@ namespace con {
     public:
       ReluLayer(const string &name, Layer *prev) :
         Layer(name, prev->num, prev->width, prev->height, prev->depth, prev),
-        inWidth(prev->width), inHeight(prev->height), inDepth(prev->depth),
         inputSize(prev->depth * prev->width * prev->height) {}
 
-      const int inWidth;
-      const int inHeight;
-      const int inDepth;
       const int inputSize;
 
       void forward() {
@@ -37,5 +33,7 @@ namespace con {
           }
         }
       }
+
+      void applyUpdate(const Real &lr, const Real &momentum, const Real &decay) {}
   };
 }

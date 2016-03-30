@@ -139,20 +139,4 @@ namespace con {
     v->resize(n);
     std::fill(v->begin(), v->end(), 1.0);
   }
-
-  void updateParam(
-      const Real &lr, const Real &momentum, const Real &decay,
-      Vec *delta, Vec *weight, Vec *history) {
-
-    // Decay.
-    for (int i = 0; i < delta->size(); i++) {
-      delta->at(i) += decay * weight->at(i);
-    }
-
-    // Adagrad.
-    for (int i = 0; i < delta->size(); i++) {
-      history->at(i) += sqr(delta->at(i));
-      weight->at(i) += -lr * delta->at(i) / (sqrt(history->at(i)) + 1e-7);
-    }
-  }
 }

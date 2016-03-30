@@ -3,6 +3,7 @@
 #include "filler.h"
 #include "im2col.h"
 #include "layer.h"
+#include "param.h"
 #include "util.h"
 
 namespace con {
@@ -11,7 +12,6 @@ namespace con {
       ConvolutionalLayer(
         const string &name,
         const int &depth, const int &kernel, const int &stride, const int &padding,
-        const Real &alpha, const Real &momentum, const Real &decay,
         Layer *prev,
         Filler *weightFiller,
         Filler *biasFiller) :
@@ -24,25 +24,10 @@ namespace con {
             depth,
             prev),
           kernel(kernel), kernelArea(sqr(kernel)), stride(stride), padding(padding),
-          alpha(alpha), momentum(momentum), decay(decay),
-          inWidth(prev->width), inHeight(prev->height), inDepth(prev->depth),
-          weightFiller(weightFiller), biasFiller(biasFiller) {
-
-        weight.resize(kernelArea * inDepth * depth);
-        weightHistory.resize(kernelArea * inDepth * depth);
-        weightFiller->fill(&weight);
-
-        delta.resize(kernelArea * inDepth * depth);
-
-        bias.resize(depth * height * width);
-        biasHistory.resize(depth * height * width);
+          weight(kernelArea * inDepth * depth, weightFiller),
+          bias(depth * height * width, biasFiller) {
 
         biasMultiplier = Vec(height * width, 1.0);
-
-        biasDelta.resize(depth * height * width);
-        biasFiller->fill(&bias);
-
-        reshape(num, width, height, depth, &constantOutput);
 
         col.resize(width * height * inDepth * kernelArea);
       }
@@ -52,29 +37,13 @@ namespace con {
       const int stride;
       const int padding;
 
-      const Real alpha;
-      const Real momentum;
-      const Real decay;
+      Param weight;
+      Param bias;
 
-      const int inWidth;
-      const int inHeight;
-      const int inDepth;
-
-      Filler *weightFiller;
-      Filler *biasFiller;
-
-      Vec weight;
-      Vec delta;
-      Vec weightHistory;
-      Vec bias;
       // (1, width * height) ones matrix.
-      Vec biasDelta;
-      Vec biasHistory;
       Vec biasMultiplier;
 
       Vec col;
-
-      vector<Vec> constantOutput;
 
       void forward() {
         for (int n = 0; n < num; n++) {
@@ -88,40 +57,31 @@ namespace con {
         gemm(
           CblasNoTrans, CblasNoTrans,
           depth, width * height, kernelArea * inDepth,
-          1., weight, col,
+          1., weight.value, col,
           0., output);
 
         gemm(
           CblasNoTrans, CblasNoTrans,
           depth, width * height, 1,
-          1., bias, biasMultiplier,
+          1., bias.value, biasMultiplier,
           1., output);
 
       }
 
-      void applyUpdate() {
-        updateParam(alpha, momentum, decay, &delta, &weight, &weightHistory);
-        updateParam(alpha, momentum, decay, &biasDelta, &bias, &biasHistory);
-      }
-
       void backProp(const vector<Vec> &nextErrors) {
-        clear(&delta);
-        clear(&biasDelta);
+        clear(&weight.delta);
+        clear(&bias.delta);
         clear(&errors);
 
         for (int n = 0; n < num; n++) {
           backPropOnce(prev->output[n], nextErrors[n], &errors[n]);
         }
-
-        #ifndef TESTING
-                applyUpdate();
-        #endif
       }
 
       void backPropOnce(const Vec &input, const Vec &nextErrors, Vec *errors) {
-        backPropBias(nextErrors, &biasDelta);
-        backPropInput(nextErrors, weight, errors);
-        backPropWeight(nextErrors, input, &delta);
+        backPropBias(nextErrors, &bias.delta);
+        backPropInput(nextErrors, weight.value, errors);
+        backPropWeight(nextErrors, input, &weight.delta);
       }
 
       void backPropBias(const Vec &nextErrors, Vec *biasDelta) {
@@ -154,6 +114,11 @@ namespace con {
             depth, kernelArea * inDepth, width * height,
             1., nextErrors, col,
             1., delta);
+      }
+
+      void applyUpdate(const Real &lr, const Real &momentum, const Real &decay) {
+        weight.update(lr, momentum, decay);
+        bias.update(lr, momentum, decay);
       }
   };
 }

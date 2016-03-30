@@ -107,6 +107,8 @@ namespace con {
         }
       }
 
+      void applyUpdate(const Real &lr, const Real &momentum, const Real &decay) {}
+
       vector<int> labels;
 
       vector<int> maxProb;
