@@ -13,7 +13,7 @@ namespace con {
         maxProb.resize(num);
       }
 
-      void getResults(vector<int> *&results) {
+      void getResults(vector<int> *results) {
         results->clear();
         for (int i = 0; i < num; i++) {
           results->push_back(getResult(i));
@@ -67,7 +67,7 @@ namespace con {
       }
 
       void forward() {
-        BUG(loss());
+        l = loss();
       }
 
       // d(log(x)) / d(x)
@@ -107,11 +107,14 @@ namespace con {
         }
       }
 
+      void applyUpdate(const Real &lr, const Real &momentum, const Real &decay) {}
+
       vector<int> labels;
 
       vector<int> maxProb;
       vector<Vec> e;
       vector<Vec> subtract;
       Vec sumE;
+      Real l;
   };
 }

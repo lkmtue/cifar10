@@ -76,6 +76,7 @@ cc_library(
     ":activation",
     ":filler",
     ":im2col",
+    ":param",
     ":util"
   ]
 )
@@ -153,4 +154,10 @@ cc_library(
 cc_library(
   name = "im2col",
   srcs = ["im2col.h"]
+)
+
+cc_library(
+  name = "param",
+  srcs = ["param.h"],
+  deps = [":util"]
 )

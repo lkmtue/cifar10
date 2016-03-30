@@ -14,15 +14,10 @@ namespace con {
           ceilDiv(prev->height - kernel, stride) + 1,
           prev->depth,
           prev),
-        kernel(kernel), stride(stride),
-        inWidth(prev->width), inHeight(prev->height), inDepth(prev->depth) {}
+        kernel(kernel), stride(stride) {}
 
       const int kernel;
       const int stride;
-
-      const int inWidth;
-      const int inHeight;
-      const int inDepth;
 
       void forward() {
         for (int n = 0; n < num; n++) {
@@ -87,5 +82,7 @@ namespace con {
           }
         }
       }
+
+      void applyUpdate(const Real &lr, const Real &momentum, const Real &decay) {}
   };
 }

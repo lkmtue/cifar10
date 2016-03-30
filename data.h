@@ -81,9 +81,7 @@ namespace con {
         for (int j = 1; j <= 3072; j++) {
           double x = (double)(unsigned char)mem[j];
           data->back().input.push_back(x);
-          // cout << x << " " << endl;
         }
-        // cout << endl;
       }
 
       delete[] mem;
