@@ -37,19 +37,19 @@ void getLayers(vector<Layer*> *layers) {
 
   layers->push_back(new InputLayer("input", batch, 32, 32, 3));
 
-  layers->push_back(new ConvolutionalLayer("conv1", 32, 5, 1, 2, layers->back(), &gaussianFiller1, &constantFiller));
-  layers->push_back(new MaxPoolingLayer("pool1", 3, 2, layers->back()));
-  layers->push_back(new ReluLayer("relu1", layers->back()));
+//  layers->push_back(new ConvolutionalLayer("conv1", 32, 3, 1, 1, layers->back(), &gaussianFiller1, &constantFiller));
+//  layers->push_back(new MaxPoolingLayer("pool1", 3, 2, layers->back()));
+//  layers->push_back(new ReluLayer("relu1", layers->back()));
 
-  layers->push_back(new ConvolutionalLayer("conv2", 64, 5, 1, 2, layers->back(), &gaussianFiller2, &constantFiller));
-  layers->push_back(new ReluLayer("relu2", layers->back()));
+  layers->push_back(new ConvolutionalLayer("conv2", 32, 3, 1, 1, layers->back(), &gaussianFiller2, &constantFiller));
+//  layers->push_back(new ReluLayer("relu2", layers->back()));
   layers->push_back(new MaxPoolingLayer("pool2", 3, 2, layers->back()));
 
-  layers->push_back(new ConvolutionalLayer("conv3", 64, 5, 1, 2, layers->back(), &gaussianFiller3, &constantFiller));
-  layers->push_back(new ReluLayer("relu3", layers->back()));
+  layers->push_back(new ConvolutionalLayer("conv3", 96, 3, 1, 1, layers->back(), &gaussianFiller2, &constantFiller));
+//  layers->push_back(new ReluLayer("relu3", layers->back()));
   layers->push_back(new MaxPoolingLayer("pool3", 3, 2, layers->back()));
 
-  layers->push_back(new FullyConnectedLayer("fc1", 64, layers->back(), &gaussianFiller3, &constantFiller));
+//  layers->push_back(new FullyConnectedLayer("fc1", 96, layers->back(), &gaussianFiller3, &constantFiller));
   layers->push_back(new FullyConnectedLayer("fc2", 10, layers->back(), &gaussianFiller3, &constantFiller));
 
   layers->push_back(new SoftmaxLossLayer("softmax", layers->back()));
