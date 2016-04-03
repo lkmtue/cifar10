@@ -114,6 +114,34 @@ namespace con {
     refineMean(mean, data);
   }
 
+  void readKaggle(vector<Sample> *data, const int offset, const int batchSize) {
+	  data->clear();
+	  std::string fileName = "data/kaggle-test_batch.bin";
+		ifstream input(fileName.c_str(), ifstream::binary);
+
+		if (input.is_open()) {
+			input.seekg(offset * 3073);
+		  char *mem = new char[3073];
+
+		  for (int i = 0; i < batchSize; i++) {
+				data->push_back(Sample());
+
+				input.read(mem, 3073);
+
+				data->back().label = mem[0];
+
+				for (int j = 1; j <= 3072; j++) {
+					double x = (double)(unsigned char)mem[j];
+					data->back().input.push_back(x);
+				}
+		  }
+		  input.close();
+
+		  delete[] mem;
+		}
+	  refineMean(mean, data);
+  }
+
   void printOutput(const vector<int> &result) {
     std::ofstream output("output", std::ofstream::out);
 
@@ -136,6 +164,30 @@ namespace con {
       std::string line = std::to_string(i + 1) + "," + label[result[i]];
       output << line << std::endl;
     }
+  }
+
+  void writeResults(const vector<short> &results, const std::string &outfp) {
+
+		std::string labels[] = {"airplane",
+				"automobile",
+				"bird",
+				"cat",
+				"deer",
+				"dog",
+				"frog",
+				"horse",
+				"ship",
+				"truck"};
+
+  	std::ofstream outfile(outfp);
+
+  	outfile << "id,label" << endl;
+
+  	for (int i = 0; i < results.size(); i++) {
+  		outfile << i+1 << "," << labels[results[i]] << endl;
+  	}
+
+    outfile.close();
   }
 
 }

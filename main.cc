@@ -30,7 +30,7 @@ vector<Layer*> layers;
 vector<Sample> trainData, testData;
 
 Real lr = 0.001;
-Real momentum = 0.9;
+Real momentum = 0;
 Real weightDecay = 0.004;
 
 void getLayers(vector<Layer*> *layers) {
@@ -41,13 +41,13 @@ void getLayers(vector<Layer*> *layers) {
   layers->push_back(new MaxPoolingLayer("pool1", 3, 2, layers->back()));
   layers->push_back(new ReluLayer("relu1", layers->back()));
 
-  layers->push_back(new ConvolutionalLayer("conv2", 32, 5, 1, 2, layers->back(), &gaussianFiller2, &constantFiller));
+  layers->push_back(new ConvolutionalLayer("conv2", 64, 5, 1, 2, layers->back(), &gaussianFiller2, &constantFiller));
   layers->push_back(new ReluLayer("relu2", layers->back()));
-  layers->push_back(new AveragePoolingLayer("pool2", 3, 2, layers->back()));
+  layers->push_back(new MaxPoolingLayer("pool2", 3, 2, layers->back()));
 
-  layers->push_back(new ConvolutionalLayer("conv3", 64, 5, 1, 2, layers->back(), &gaussianFiller2, &constantFiller));
+  layers->push_back(new ConvolutionalLayer("conv3", 64, 5, 1, 2, layers->back(), &gaussianFiller3, &constantFiller));
   layers->push_back(new ReluLayer("relu3", layers->back()));
-  layers->push_back(new AveragePoolingLayer("pool3", 3, 2, layers->back()));
+  layers->push_back(new MaxPoolingLayer("pool3", 3, 2, layers->back()));
 
   layers->push_back(new FullyConnectedLayer("fc1", 64, layers->back(), &gaussianFiller3, &constantFiller));
   layers->push_back(new FullyConnectedLayer("fc2", 10, layers->back(), &gaussianFiller3, &constantFiller));
@@ -64,5 +64,13 @@ int main() {
   readTrain(&trainData);
   readTest(&testData);
   train(batch, layers, trainData, testData, lr, momentum, weightDecay);
+
+  vector<Sample> kaggleData;
+  vector<short> kaggleResults;
+	testKaggle(kaggleResults, batch, layers);
+
+	cout << "writing to file...";
+	writeResults(kaggleResults, "test.csv");
+	cout << "done" << endl;
   return 0;
 }

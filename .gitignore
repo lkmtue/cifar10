@@ -8,7 +8,7 @@ fully_connected_layer_old.h
 
 ### Windows Dependencies ###
 /boost_1_60_0-compact/
-/OpenBLAS-v0.2.15-Win32/
+/OpenBLAS-v0.2.15-Win64-int32/
 dlls/
 
 ### Build Output ###

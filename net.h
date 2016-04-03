@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <iostream>
+#include <fstream>
 #include <vector>
 
 #include "data.h"
@@ -82,7 +83,7 @@ namespace con {
       layers[l]->forward();
     }
 
-    cout << "loss: " << outputLayer->l << endl;
+//    cout << "loss: " << outputLayer->l << endl;
 
     // Back propagation.
     for (int l = (int)layers.size() - 1; l >= 0; l--) {
@@ -107,7 +108,7 @@ namespace con {
 
     validate(batchSize, layers, validateData);
 
-    for (int epoch = 0; epoch < 10; epoch++) {
+    for (int epoch = 0; epoch < 15; epoch++) {
       cout << "Start epoch #" << epoch << endl;
 
       for (int i = 0; i < trainData.size(); i += batchSize) {
@@ -141,5 +142,45 @@ namespace con {
     }
 
     outputLayer->getResults(results);
+  }
+
+  void testKaggle(
+  		vector<short> &kaggleResults,
+  		const int &batchSize,
+  		const vector<Layer*> &layers) {
+
+  	vector<int> results;
+  	vector<Sample> validateData;
+
+		for (int i = 0; i < 300000; i += batchSize) {
+			if (i % 10000 == 0) {
+				cout << "Validating: " << i << endl;
+			}
+
+			readKaggle(&validateData, i, batchSize);
+
+			input.clear();
+			output.clear();
+
+			for (int k = 0; k < batchSize; k++) {
+				input.push_back(validateData[k].input);
+				output.push_back(validateData[k].label);
+			}
+			InputLayer *inputLayer = (InputLayer*)layers[0];
+			SoftmaxLossLayer *outputLayer = (SoftmaxLossLayer*)layers.back();
+
+			inputLayer->setOutput(input);
+			outputLayer->setLabels(output);
+
+			for (int l = 0; l < layers.size(); l++) {
+				layers[l]->forward();
+			}
+
+			outputLayer->getResults(&results);
+
+			for (int k = 0; k < batchSize; k++) {
+				kaggleResults.push_back(results[k]);
+			}
+		}
   }
 }
