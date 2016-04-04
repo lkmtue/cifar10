@@ -67,10 +67,10 @@ int main() {
 
   vector<Sample> kaggleData;
   vector<short> kaggleResults;
-	testKaggle(kaggleResults, batch, layers);
+  testKaggle(kaggleResults, batch, layers);
 
-	cout << "writing to file...";
-	writeResults(kaggleResults, "test.csv");
-	cout << "done" << endl;
+  cout << "writing to file...";
+  writeResults(kaggleResults, "test.csv");
+  cout << "done" << endl;
   return 0;
 }

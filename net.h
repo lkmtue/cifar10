@@ -145,42 +145,42 @@ namespace con {
   }
 
   void testKaggle(
-  		vector<short> &kaggleResults,
-  		const int &batchSize,
-  		const vector<Layer*> &layers) {
+      vector<short> &kaggleResults,
+      const int &batchSize,
+      const vector<Layer*> &layers) {
 
-  	vector<int> results;
+    vector<int> results;
   	vector<Sample> validateData;
 
-		for (int i = 0; i < 300000; i += batchSize) {
-			if (i % 10000 == 0) {
-				cout << "Validating: " << i << endl;
-			}
+  	for (int i = 0; i < 300000; i += batchSize) {
+  	  if (i % 10000 == 0) {
+  	    cout << "Validating: " << i << endl;
+  	  }
 
-			readKaggle(&validateData, i, batchSize);
+  	  readKaggle(&validateData, i, batchSize);
 
-			input.clear();
-			output.clear();
+      input.clear();
+      output.clear();
 
-			for (int k = 0; k < batchSize; k++) {
-				input.push_back(validateData[k].input);
-				output.push_back(validateData[k].label);
-			}
-			InputLayer *inputLayer = (InputLayer*)layers[0];
-			SoftmaxLossLayer *outputLayer = (SoftmaxLossLayer*)layers.back();
+      for (int k = 0; k < batchSize; k++) {
+        input.push_back(validateData[k].input);
+        output.push_back(validateData[k].label);
+      }
+        InputLayer *inputLayer = (InputLayer*)layers[0];
+        SoftmaxLossLayer *outputLayer = (SoftmaxLossLayer*)layers.back();
 
-			inputLayer->setOutput(input);
-			outputLayer->setLabels(output);
+        inputLayer->setOutput(input);
+        outputLayer->setLabels(output);
 
-			for (int l = 0; l < layers.size(); l++) {
-				layers[l]->forward();
-			}
+      for (int l = 0; l < layers.size(); l++) {
+          layers[l]->forward();
+      }
 
-			outputLayer->getResults(&results);
+          outputLayer->getResults(&results);
 
-			for (int k = 0; k < batchSize; k++) {
-				kaggleResults.push_back(results[k]);
-			}
-		}
+      for (int k = 0; k < batchSize; k++) {
+          kaggleResults.push_back(results[k]);
+      }
+    }
   }
 }
